@@ -62,10 +62,14 @@ exports.deleteWeb = function(req, res) {
 //PUT - Insert a new Filter in a Web
 exports.addFilterToWeb = function(req, res) {  
     var webId = req.params.webId;
-	Web.update({_id: req.params.webId},{$push: {filters:{id: [count+1], pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
-	   console.log(result);
-	   res.json(result);
-	});
+    Web.findById(webId, function(err, web) {
+        var count = web.filters.length;
+        console.log('ADD filter: ' + count);
+        Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
+           console.log(result);
+           res.json(result);
+        });
+    });
 }
 
 //GET - Return a Filter with specified ID
