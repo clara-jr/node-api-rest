@@ -76,19 +76,14 @@ exports.addFilterToWeb = function(req, res) {
 exports.getFilterOfWeb = function(req, res) {  
     var webId = req.params.webId;
     var filterId = req.params.filterId;
-    var filterPattern = req.body.pattern;
-    var filterType = req.body.filterType;
-    Web.findOne({_id: webId, filters: {$elemMatch: {id: filterId}}}).count(function(err, count)
-    {
-        if(count == 0) {
-            res.json("Filter does not exists in DB.");
-        } else {
-            Web.findOne({_id: webId, filters: {$elemMatch: {id: filterId}}}, function(err, filter) {
-                if(err) return res.send(500, err.message);
-                console.log('GET filter: ' + filter.pattern);
-                res.status(200).jsonp(filter);
-            });
-        }
+    console.log('GET filter');
+    Web.findById(webId, function(err, web) {
+        if(err) return res.status(500).send(err.message);
+        var filter = web.filters.id(filterId);
+        console.log('GET filter' + filter);
+        console.log('GET filter' + filter.pattern);
+        res.status(200).jsonp(filter);
+        // if (filter == 'undefined') res.json("Filter does not exists in DB.");
     });
 }
 
@@ -98,12 +93,13 @@ exports.updateFilterOfWeb = function(req, res) {
 	var filterId = req.params.filterId;
   	var filterPattern = req.body.pattern;
   	var filterType = req.body.filterType;
-	Web.findOne({_id: webId, filters: {$elemMatch: {id: filterId}}}).count(function(err, count)
+	Web.findOne({_id: webId, filters: {$elemMatch: {_id: filterId}}}).count(function(err, count)
 	{
 		if(count == 0) {
 			res.json("Filter does not exists in DB.");
 		} else {
-		    Web.update({'filters.id': filterId}, {'$set': {
+            console.log('UPDATE filter: ' + count);
+		    Web.update({'filters._id': filterId}, {'$set': {
 			    'filters.$.pattern': filterPattern,
 			    'filters.$.type': filterType
 				}}, function(err) {
@@ -119,12 +115,12 @@ exports.updateFilterOfWeb = function(req, res) {
 exports.deleteFilterOfWeb = function(req, res) {  
     var webId = req.params.webId;
     var filterId = req.params.filterId;
-    Web.findOne({_id: webId, filters: {$elemMatch: {id: filterId}}}).count(function(err, count)
+    Web.findOne({_id: webId, filters: {$elemMatch: {_id: filterId}}}).count(function(err, count)
     {
         if(count == 0) {
             res.json("Filter does not exists in DB.");
         } else {
-            Web.update({_id: webId},{$pull: {filters:{id: [filterId]}}}, function(err, result) {
+            Web.update({_id: webId},{$pull: {filters:{_id: [filterId]}}}, function(err, result) {
                console.log(result);
                res.json(result);
             });
