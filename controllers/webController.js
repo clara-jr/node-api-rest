@@ -38,14 +38,15 @@ exports.findByUrl = function(req, res) {
 exports.addWeb = function(req, res) {  
     console.log('POST');
     console.log(req.body);
+    var url = req.body.url ? req.body.url : req.body.data.url;
+    var genre = req.body.genre ? req.body.genre : req.body.data.genre;
     var web = new Web({
-        url:    req.body.url,
-        genre:    req.body.genre
+        url:    url,
+        genre:  genre
     });
-
     web.save(function(err, web) {
         if(err) return res.status(500).send(err.message);
-    	res.status(200).jsonp(web);
+        res.status(200).jsonp(web);
     });
 };
 

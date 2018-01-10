@@ -4,6 +4,9 @@ var bodyParser  = require("body-parser");
 var methodOverride = require("method-override");
 var mongoose = require('mongoose');
 
+var cors = require('cors');
+app.use(cors());
+
 app.use(bodyParser.urlencoded({ extended: false }));  
 app.use(bodyParser.json());  
 app.use(methodOverride());
@@ -11,7 +14,7 @@ app.use(methodOverride());
 var routes = require('./routes/index');
 app.use('/', routes);
 
-mongoose.connect('mongodb://localhost/webfilters', function(err, res) {  
+mongoose.connect('mongodb://localhost/webfilters', function(err, res) {  //'mongodb://admin:admin@ds125183.mlab.com:25183/webfilters', function(err, res) {  
   if(err) {
     console.log('ERROR: connecting to Database. ' + err);
   }
