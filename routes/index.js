@@ -6,6 +6,10 @@ router.get('/', function(req, res) {
 });
 
 var webController = require('../controllers/webController');
+var sessionController = require('../controllers/sessionController');
+
+router.route('/login/:u/:p')  
+  .get(sessionController.login);
 
 router.route('/webs')  
   .get(webController.findAllWebs)
