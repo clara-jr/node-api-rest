@@ -19,7 +19,12 @@ exports.findById = function(req, res) {
     Web.findById(req.params.webId, function(err, web) {
     	if(err) return res.status(500).send(err.message);
     	console.log('GET /webs/' + req.params.webId);
-        res.status(200).jsonp(web);
+        console.log(web);
+        if (web) {
+            res.status(200).jsonp(web);
+        } else {
+            res.status(200).jsonp({error: 'Web inexistent'});
+        }
     });
 };
 
@@ -44,9 +49,15 @@ exports.addWeb = function(req, res) {
         url:    url,
         genre:  genre
     });
-    web.save(function(err, web) {
-        if(err) return res.status(500).send(err.message);
-        res.status(200).jsonp(web);
+    Web.find({url: url}).count(function(err, count) {
+        if (count != 0) {
+            res.status(200).jsonp({error: 'Web with url '+url+' already exists'});
+        } else {
+            web.save(function(err, web) {
+                if(err) return res.status(500).send(err.message);
+                res.status(200).jsonp(web);
+            });
+        }
     });
 };
 
@@ -80,11 +91,17 @@ exports.getFilterOfWeb = function(req, res) {
     console.log('GET filter');
     Web.findById(webId, function(err, web) {
         if(err) return res.status(500).send(err.message);
-        var filter = web.filters.id(filterId);
-        console.log('GET filter' + filter);
-        console.log('GET filter' + filter.pattern);
-        res.status(200).jsonp(filter);
-        // if (filter == 'undefined') res.json("Filter does not exists in DB.");
+        if (web) {
+            var filter = web.filters.id(filterId);
+            if (filter) {
+                console.log('GET filter' + filter);
+                res.status(200).jsonp(filter);
+            } else {
+                res.status(200).jsonp({error: 'Filter inexistent'});
+            }
+        } else {
+            res.status(200).jsonp({error: 'Web inexistent'});
+        }
     });
 }
 
