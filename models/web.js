@@ -4,11 +4,11 @@ var mongoose = require('mongoose'),
 var webSchema = new Schema({  
   url:    { type: String },
   genre:    { type: String, enum:
-  ['News', 'Sports', 'Films', 'Music', 'Free Time'] },
+  ['Reference', 'News', 'Sports', 'Science', 'Communication Media', 'Home', 'Recreation'] },
   filters : [{
         pattern : { type: String },
         type : { type: String, enum: 
-        	['Title', 'Body', 'Date', 'Author'] }
+        	['Title', 'Body', 'Date', 'Author', 'Image'] }
     }]
 });
 

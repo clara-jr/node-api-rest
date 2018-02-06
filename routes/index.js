@@ -16,12 +16,14 @@ router.route('/webs')
   .post(webController.addWeb);
 
 router.route('/webs/:webId')  
-  .get(webController.findById)
+  .get(webController.findById) 
   .put(webController.addFilterToWeb)
   .delete(webController.deleteWeb);
 
-router.route('/url')  
+router.route('/webs/url/:webUrl')  
   .get(webController.findByUrl);
+router.route('/webs/genre/:webGenre')  
+  .get(webController.findByGenre);
 
 router.route('/webs/:webId/:filterId') 
   .get(webController.getFilterOfWeb)

@@ -29,13 +29,30 @@ exports.findById = function(req, res) {
 };
 
 //GET - Return a Web with specified url
-exports.findByUrl = function(req, res) {  
-    console.log('GET /webs/url/' + req.body.url);
-    Web.find({url: req.body.url}).count(function(err, count) {
-        if(err) return res.send(500, err.message);
-        console.log('GET /webs/url/' + req.body.url);
-        console.log('GET /webs/url/' + count);
-        res.status(200).jsonp(count); 
+exports.findByUrl = function(req, res) {
+    Web.find({url: req.params.webUrl}, function(err, web) {
+        if(err) return res.status(500).send(err.message);
+        console.log('GET /webs/url/' + req.params.webUrl);
+        console.log(web);
+        if (web) {
+            res.status(200).jsonp(web);
+        } else {
+            res.status(200).jsonp({error: 'Web inexistent'});
+        }
+    });
+};
+
+//GET - Return Webs with specified genre
+exports.findByGenre = function(req, res) {
+    Web.find({genre: req.params.webGenre}, function(err, webs) {
+        if(err) return res.status(500).send(err.message);
+        console.log('GET /webs/genre/' + req.params.webGenre);
+        console.log(webs);
+        if (webs) {
+            res.status(200).jsonp(webs);
+        } else {
+            res.status(200).jsonp({error: 'No webs with genre: '+req.params.webGenre});
+        }
     });
 };
 
@@ -77,10 +94,15 @@ exports.addFilterToWeb = function(req, res) {
     Web.findById(webId, function(err, web) {
         var count = web.filters.length;
         console.log('ADD filter: ' + count);
-        Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
-           console.log(result);
-           res.json(result);
-        });
+        var filter = web.filters.some(item => item.pattern === req.body.pattern);
+        if (filter) {
+            res.status(200).jsonp({error: 'Filter with pattern '+req.body.pattern+' already exists'});
+        } else {
+            Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
+               console.log(result);
+               res.json(result);
+            });
+        }
     });
 }
 
