@@ -11,6 +11,9 @@ var sessionController = require('../controllers/sessionController');
 router.route('/login/:u/:p')  
   .get(sessionController.login);
 
+router.route('/webs/parser')  
+  .get(webController.findAllWebsParser);
+
 router.route('/webs')  
   .get(webController.findAllWebs)
   .post(webController.addWeb);

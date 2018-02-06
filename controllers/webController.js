@@ -3,13 +3,47 @@ var mongoose = require('mongoose');
 require('../models/web');
 var Web  = mongoose.model('Web');
 
+parseJsonWeb = function(json) {
+    var web = {
+        url:    json.url,
+        genre:  json.genre
+    };
+    var filters_ = new Array();
+    for (var i = 0; i<json.filters.length; i++) {
+        filters_.push(parseJsonFilter(json.filters[i]));
+    }
+    web.filters = filters_;
+    return web;
+};
+
+parseJsonFilter = function(json) { 
+    var filter = {
+        pattern:    json.pattern,
+        type:  json.type
+    };
+    return filter;
+};
+
 //RESTful API
+
+//GET - Return all webs in the DB (Parse response)
+exports.findAllWebsParser = function(req, res) {  
+    Web.find(function(err, webs) {
+        if(err) res.send(500, err.message);
+        console.log('GET /webs')
+        var webs_ = new Array();
+        for (i in webs) {
+            webs_.push(parseJsonWeb(webs[i]));
+        }
+        res.status(200).jsonp(webs_);
+    });
+};
 
 //GET - Return all webs in the DB
 exports.findAllWebs = function(req, res) {  
     Web.find(function(err, webs) {
-    	if(err) res.send(500, err.message);
-    	console.log('GET /webs')
+        if(err) res.send(500, err.message);
+        console.log('GET /webs')
         res.status(200).jsonp(webs);
     });
 };
@@ -28,28 +62,34 @@ exports.findById = function(req, res) {
     });
 };
 
-//GET - Return a Web with specified url
+//GET - Return a Web with specified url (Parse response)
 exports.findByUrl = function(req, res) {
     Web.find({url: req.params.webUrl}, function(err, web) {
         if(err) return res.status(500).send(err.message);
         console.log('GET /webs/url/' + req.params.webUrl);
         console.log(web);
-        if (web) {
-            res.status(200).jsonp(web);
+        if (web.length != 0) {
+            var web_ = new Array();
+            web_.push(parseJsonWeb(web[0]));
+            res.status(200).jsonp(web_);
         } else {
             res.status(200).jsonp({error: 'Web inexistent'});
         }
     });
 };
 
-//GET - Return Webs with specified genre
+//GET - Return Webs with specified genre (Parse response)
 exports.findByGenre = function(req, res) {
     Web.find({genre: req.params.webGenre}, function(err, webs) {
         if(err) return res.status(500).send(err.message);
         console.log('GET /webs/genre/' + req.params.webGenre);
         console.log(webs);
-        if (webs) {
-            res.status(200).jsonp(webs);
+        if (webs.length != 0) {
+            var webs_ = new Array();
+            for (i in webs) {
+                webs_.push(parseJsonWeb(webs[i]));
+            }
+            res.status(200).jsonp(webs_);
         } else {
             res.status(200).jsonp({error: 'No webs with genre: '+req.params.webGenre});
         }
