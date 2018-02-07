@@ -8,6 +8,9 @@ router.get('/', function(req, res) {
 var webController = require('../controllers/webController');
 var sessionController = require('../controllers/sessionController');
 
+router.route('/create/:u/:p')  
+  .get(sessionController.create);
+
 router.route('/login/:u/:p')  
   .get(sessionController.login);
 
