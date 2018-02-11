@@ -169,26 +169,32 @@ exports.getFilterOfWeb = function(req, res) {
 
 //PUT - Update a Filter of a Web
 exports.updateFilterOfWeb = function(req, res) {  
-	var webId = req.params.webId;
-	var filterId = req.params.filterId;
-  	var filterPattern = req.body.pattern;
-  	var filterType = req.body.filterType;
-	Web.findOne({_id: webId, filters: {$elemMatch: {_id: filterId}}}).count(function(err, count)
-	{
-		if(count == 0) {
-			res.json("Filter does not exists in DB.");
-		} else {
-            console.log('UPDATE filter: ' + count);
-		    Web.update({'filters._id': filterId}, {'$set': {
-			    'filters.$.pattern': filterPattern,
-			    'filters.$.type': filterType
-				}}, function(err) {
-					if(err) return res.status(500).send(err.message);
-      				res.status(200).send();
-				}
-			);
-		}
-	});
+    var webId = req.params.webId;
+    var filterId = req.params.filterId;
+    var filterPattern = req.body.pattern;
+    var filterType = req.body.filterType;
+    Web.findById(webId, function(err, web) {
+        var filter_new = web.filters.some(item => item.pattern === req.body.pattern);
+        var filter = web.filters.id(filterId);
+        if (filter) {
+            console.log(filter);
+            console.log(filter_new);
+            if (filter_new && req.body.pattern != filter.pattern) {
+                res.status(200).jsonp({error: 'Filter with pattern '+req.body.pattern+' already exists'});
+            } else {
+                Web.update({'filters._id': filterId}, {'$set': {
+                    'filters.$.pattern': filterPattern,
+                    'filters.$.type': filterType
+                    }}, function(err) {
+                        if(err) return res.status(500).send(err.message);
+                        res.status(200).send();
+                    }
+                );
+            }
+        } else {
+            res.status(200).jsonp({error: 'Filter inexistent'});
+        }
+    });
 }
 
 //PUT - Delete a Filter of a Web
