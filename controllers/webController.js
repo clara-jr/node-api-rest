@@ -29,7 +29,7 @@ parseJsonFilter = function(json) {
 //GET - Return all webs in the DB (Parse response)
 exports.findAllWebsParser = function(req, res) {  
     Web.find(function(err, webs) {
-        if(err) res.send(500, err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         console.log('GET /webs')
         var webs_ = new Array();
         for (i in webs) {
@@ -42,7 +42,7 @@ exports.findAllWebsParser = function(req, res) {
 //GET - Return all webs in the DB
 exports.findAllWebs = function(req, res) {  
     Web.find(function(err, webs) {
-        if(err) res.send(500, err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         console.log('GET /webs')
         res.status(200).jsonp(webs);
     });
@@ -51,13 +51,13 @@ exports.findAllWebs = function(req, res) {
 //GET - Return a Web with specified ID
 exports.findById = function(req, res) {  
     Web.findById(req.params.webId, function(err, web) {
-    	if(err) return res.status(500).send(err.message);
+    	if(err) return res.status(500).send({error: err.message}); // Internal Server Error
     	console.log('GET /webs/' + req.params.webId);
         console.log(web);
         if (web) {
             res.status(200).jsonp(web);
         } else {
-            res.status(200).jsonp({error: 'Web inexistent'});
+            res.status(404).send({error: 'Web inexistent'});
         }
     });
 };
@@ -65,7 +65,7 @@ exports.findById = function(req, res) {
 //GET - Return a Web with specified url (Parse response)
 exports.findByUrl = function(req, res) {
     Web.find({url: req.params.webUrl}, function(err, web) {
-        if(err) return res.status(500).send(err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         console.log('GET /webs/url/' + req.params.webUrl);
         console.log(web);
         if (web.length != 0) {
@@ -73,7 +73,7 @@ exports.findByUrl = function(req, res) {
             web_.push(parseJsonWeb(web[0]));
             res.status(200).jsonp(web_);
         } else {
-            res.status(200).jsonp({error: 'Web inexistent'});
+            res.status(404).send({error: 'Web inexistent'});
         }
     });
 };
@@ -81,7 +81,7 @@ exports.findByUrl = function(req, res) {
 //GET - Return Webs with specified genre (Parse response)
 exports.findByGenre = function(req, res) {
     Web.find({genre: req.params.webGenre}, function(err, webs) {
-        if(err) return res.status(500).send(err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         console.log('GET /webs/genre/' + req.params.webGenre);
         console.log(webs);
         if (webs.length != 0) {
@@ -91,7 +91,7 @@ exports.findByGenre = function(req, res) {
             }
             res.status(200).jsonp(webs_);
         } else {
-            res.status(200).jsonp({error: 'No webs with genre: '+req.params.webGenre});
+            res.status(404).send({error: 'No webs with genre: '+req.params.webGenre});
         }
     });
 };
@@ -107,11 +107,13 @@ exports.addWeb = function(req, res) {
         genre:  genre
     });
     Web.find({url: url}).count(function(err, count) {
+    	if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         if (count != 0) {
-            res.status(200).jsonp({error: 'Web with url '+url+' already exists'});
+            res.status(409).send({error: 'Web with url '+url+' already exists'});
         } else {
             web.save(function(err, web) {
-                if(err) return res.status(500).send(err.message);
+                if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+                console.log(web);
                 res.status(200).jsonp(web);
             });
         }
@@ -121,10 +123,15 @@ exports.addWeb = function(req, res) {
 //DELETE - Delete a Web with specified ID
 exports.deleteWeb = function(req, res) {  
     Web.findById(req.params.webId, function(err, web) {
-        web.remove(function(err) {
-            if(err) return res.status(500).send(err.message);
-      		res.status(200).send();
-        })
+    	if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+        if (web) {
+            web.remove(function(err) {
+	            if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+	      		res.status(200).send();
+	        })
+        } else {
+            res.status(404).send({error: 'Web inexistent'});
+        }
     });
 };
 
@@ -132,16 +139,21 @@ exports.deleteWeb = function(req, res) {
 exports.addFilterToWeb = function(req, res) {  
     var webId = req.params.webId;
     Web.findById(webId, function(err, web) {
-        var count = web.filters.length;
-        console.log('ADD filter: ' + count);
-        var filter = web.filters.some(item => item.pattern === req.body.pattern);
-        if (filter) {
-            res.status(200).jsonp({error: 'Filter with pattern '+req.body.pattern+' already exists'});
+    	if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+    	if (web) {
+            var count = web.filters.length;
+	        console.log('ADD filter: ' + count);
+	        var filter = web.filters.some(item => item.pattern === req.body.pattern);
+	        if (filter) {
+	            res.status(409).send({error: 'Filter with pattern '+req.body.pattern+' already exists'});
+	        } else {
+	            Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
+	               if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+	               res.json(200).send();
+	            });
+	        }
         } else {
-            Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
-               console.log(result);
-               res.json(result);
-            });
+            res.status(404).send({error: 'Web inexistent'});
         }
     });
 }
@@ -152,17 +164,17 @@ exports.getFilterOfWeb = function(req, res) {
     var filterId = req.params.filterId;
     console.log('GET filter');
     Web.findById(webId, function(err, web) {
-        if(err) return res.status(500).send(err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         if (web) {
             var filter = web.filters.id(filterId);
             if (filter) {
                 console.log('GET filter' + filter);
                 res.status(200).jsonp(filter);
             } else {
-                res.status(200).jsonp({error: 'Filter inexistent'});
+                res.status(404).send({error: 'Filter inexistent'});
             }
         } else {
-            res.status(200).jsonp({error: 'Web inexistent'});
+            res.status(404).send({error: 'Web inexistent'});
         }
     });
 }
@@ -174,25 +186,30 @@ exports.updateFilterOfWeb = function(req, res) {
     var filterPattern = req.body.pattern;
     var filterType = req.body.filterType;
     Web.findById(webId, function(err, web) {
-        var filter_new = web.filters.some(item => item.pattern === req.body.pattern);
-        var filter = web.filters.id(filterId);
-        if (filter) {
-            console.log(filter);
-            console.log(filter_new);
-            if (filter_new && req.body.pattern != filter.pattern) {
-                res.status(200).jsonp({error: 'Filter with pattern '+req.body.pattern+' already exists'});
-            } else {
-                Web.update({'filters._id': filterId}, {'$set': {
-                    'filters.$.pattern': filterPattern,
-                    'filters.$.type': filterType
-                    }}, function(err) {
-                        if(err) return res.status(500).send(err.message);
-                        res.status(200).send();
-                    }
-                );
-            }
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+        if (web) {
+            var filter_new = web.filters.some(item => item.pattern === req.body.pattern);
+	        var filter = web.filters.id(filterId);
+	        if (filter) {
+	            console.log(filter);
+	            console.log(filter_new);
+	            if (filter_new && req.body.pattern != filter.pattern) {
+	                res.status(409).send({error: 'Filter with pattern '+req.body.pattern+' already exists'});
+	            } else {
+	                Web.update({'filters._id': filterId}, {'$set': {
+	                    'filters.$.pattern': filterPattern,
+	                    'filters.$.type': filterType
+	                    }}, function(err) {
+	                        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+	                        res.status(200).send();
+	                    }
+	                );
+	            }
+	        } else {
+	            res.status(404).send({error: 'Filter inexistent'});
+	        }
         } else {
-            res.status(200).jsonp({error: 'Filter inexistent'});
+            res.status(404).send({error: 'Web inexistent'});
         }
     });
 }
@@ -201,14 +218,14 @@ exports.updateFilterOfWeb = function(req, res) {
 exports.deleteFilterOfWeb = function(req, res) {  
     var webId = req.params.webId;
     var filterId = req.params.filterId;
-    Web.findOne({_id: webId, filters: {$elemMatch: {_id: filterId}}}).count(function(err, count)
-    {
+    Web.findOne({_id: webId, filters: {$elemMatch: {_id: filterId}}}).count(function(err, count) {
+    	if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         if(count == 0) {
-            res.json("Filter does not exists in DB.");
+            res.status(404).send({error: 'Filter inexistent'});
         } else {
             Web.update({_id: webId},{$pull: {filters:{_id: [filterId]}}}, function(err, result) {
-               console.log(result);
-               res.json(result);
+            	if(err) return res.status(500).send({error: err.message}); // Internal Server Error
+               	res.status(200).send();
             });
         }
     });

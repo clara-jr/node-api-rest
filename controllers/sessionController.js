@@ -9,15 +9,15 @@ exports.login = function(req, res) {
     var password = req.params.p;
     var hash = sha256(password);
     User.find({username: login}, function(err, user) {
-        if(err) return res.status(500).send(err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         if (user.length != 0) {
         	if (hash === user[0].password) {
-        		res.status(200).jsonp({correct: true});
+        		res.status(200).send();
         	} else {
-        		res.status(200).jsonp({correct: false, message: 'Incorrect password'});
+        		res.status(403).send({error: 'Incorrect password'});
         	}
         } else {
-            res.status(200).jsonp({correct: false, message: 'Incorrect username'});
+            res.status(403).send({error: 'Incorrect username'});
         }
     });
 };
@@ -32,7 +32,7 @@ exports.create = function(req, res) {
         password:  hash
     });
     user.save(function(err, user) {
-        if(err) return res.status(500).send(err.message);
+        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
         res.status(200).jsonp(user);
     });
 };
