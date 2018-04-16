@@ -14,12 +14,12 @@ app.use(methodOverride());
 var routes = require('./routes/index');
 app.use('/', routes);
 
-mongoose.connect('mongodb://localhost/webfilters', function(err, res) {  //'mongodb://admin:admin@ds125183.mlab.com:25183/webfilters', function(err, res) {  
+mongoose.connect('mongodb://localhost/webfiltersdbbb', function(err, res) {  //'mongodb://admin:admin@ds125183.mlab.com:25183/webfilters', function(err, res) {  
   if(err) {
     console.log('ERROR: connecting to Database. ' + err);
   }
-  app.listen(8080, function() {
-    console.log("Node server running on http://localhost:8080");
+  app.listen(1607, function() {
+    console.log("Node server running on http://localhost:1607");
   });
 });
 

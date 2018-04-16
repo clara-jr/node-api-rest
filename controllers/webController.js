@@ -5,6 +5,7 @@ var Web  = mongoose.model('Web');
 
 parseJsonWeb = function(json) {
     var web = {
+        name:   json.name,
         url:    json.url,
         genre:  json.genre
     };
@@ -19,6 +20,7 @@ parseJsonWeb = function(json) {
 parseJsonFilter = function(json) { 
     var filter = {
         pattern:    json.pattern,
+        level: json.level,
         type:  json.type
     };
     return filter;
@@ -100,9 +102,11 @@ exports.findByGenre = function(req, res) {
 exports.addWeb = function(req, res) {  
     console.log('POST');
     console.log(req.body);
+    var name = req.body.name ? req.body.name : req.body.data.name;
     var url = req.body.url ? req.body.url : req.body.data.url;
     var genre = req.body.genre ? req.body.genre : req.body.data.genre;
     var web = new Web({
+        name:   name, 
         url:    url,
         genre:  genre
     });
@@ -147,7 +151,7 @@ exports.addFilterToWeb = function(req, res) {
 	        if (filter) {
 	            res.status(409).send({error: 'Filter with pattern '+req.body.pattern+' already exists'});
 	        } else {
-	            Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
+	            Web.update({_id: webId},{$push: {filters:{pattern: [req.body.pattern], level: [req.body.level], type: [req.body.filterType]}}}, {upsert:true}, function(err, result) {
 	               if(err) return res.status(500).send({error: err.message}); // Internal Server Error
 	               res.json(200).send();
 	            });
@@ -184,6 +188,7 @@ exports.updateFilterOfWeb = function(req, res) {
     var webId = req.params.webId;
     var filterId = req.params.filterId;
     var filterPattern = req.body.pattern;
+    var filterLevel = req.body.level;
     var filterType = req.body.filterType;
     Web.findById(webId, function(err, web) {
         if(err) return res.status(500).send({error: err.message}); // Internal Server Error
@@ -198,6 +203,7 @@ exports.updateFilterOfWeb = function(req, res) {
 	            } else {
 	                Web.update({'filters._id': filterId}, {'$set': {
 	                    'filters.$.pattern': filterPattern,
+                        'filters.$.level': filterLevel,
 	                    'filters.$.type': filterType
 	                    }}, function(err) {
 	                        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
