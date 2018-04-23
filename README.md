@@ -16,9 +16,9 @@ npm install
 
 ### How to configure
 
-+ The server is configured to listen in port 8080. You can modify it.
-+ Now you can see the app in port 8080: http://localhost:8080
-+ You can also see the data from mongodb in mongodb://localhost/webfilters
++ The server is configured to listen in port 1607. You can modify it.
++ Now you can see the app in port 1607: http://localhost:1607
++ You can also see the data from mongodb in mongodb://localhost/scrapingdb
 
 ### How to run
 
