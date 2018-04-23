@@ -1,24 +1,29 @@
 //File: controllers/sessionController.js
-var mongoose = require('mongoose');  
-require('../models/user');
-var User  = mongoose.model('User');
+var MongoClient = require('mongodb').MongoClient;
+var url = "mongodb://localhost:27017/";
 var sha256 = require('js-sha256');
 
 exports.login = function(req, res) {  
     var login = req.params.u;
     var password = req.params.p;
     var hash = sha256(password);
-    User.find({username: login}, function(err, user) {
-        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
-        if (user.length != 0) {
-        	if (hash === user[0].password) {
-        		res.status(200).send();
-        	} else {
-        		res.status(403).send({error: 'Incorrect password'});
-        	}
-        } else {
-            res.status(403).send({error: 'Incorrect username'});
-        }
+    MongoClient.connect(url, function(err, db) {
+        if (err) return res.status(500).send({error: err.message}); // Internal Server Error
+        var dbo = db.db("scrapingdb");
+        var query = { username: login };
+        dbo.collection("users").findOne(query, function(err, result) {
+            if (err) return res.status(500).send({error: err.message}); // Internal Server Error
+            db.close();
+            if (result.username) {
+                if (hash === result.password) {
+                    res.sendStatus(200);
+                } else {
+                    res.status(403).send({error: 'Incorrect password'});
+                }
+            } else {
+                res.status(403).send({error: 'Incorrect username'});
+            }
+        });
     });
 };
 
@@ -27,12 +32,18 @@ exports.create = function(req, res) {
     var username = req.params.u;
     var password = req.params.p;
 	var hash = sha256(password);
-    var user = new User({
+    var user = {
         username:    username,
         password:  hash
-    });
-    user.save(function(err, user) {
-        if(err) return res.status(500).send({error: err.message}); // Internal Server Error
-        res.status(200).jsonp(user);
+    };
+    MongoClient.connect(url, function(err, db) {
+        if (err) throw err;
+        var dbo = db.db("scrapingdb");
+        dbo.collection("users").insertOne(user, function(err, result) {
+            if (err) return res.status(500).send({error: err.message}); // Internal Server Error
+            console.log("1 document inserted");
+            db.close();
+            res.sendStatus(200);
+        });
     });
 };
